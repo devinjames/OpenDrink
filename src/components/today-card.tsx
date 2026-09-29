@@ -39,13 +39,12 @@ export function TodayCard({ today, count, threshold, streak, onChange }: Props) 
   return (
     <Card style={styles.card}>
       <View style={styles.header}>
-        <View>
-          <Text style={[styles.eyebrow, { color: t.accent }]}>TODAY</Text>
-          <Text style={[styles.date, { color: t.textMuted }]}>{formatLongDate(today)}</Text>
-        </View>
+        <Text style={[styles.eyebrow, { color: t.accent }]}>
+          TODAY <Text style={[styles.date, { color: t.textMuted }]}>· {formatLongDate(today)}</Text>
+        </Text>
         {streak > 0 ? (
           <View style={[styles.streak, { backgroundColor: t.accentSoft }]}>
-            <Ionicons name="leaf" size={14} color={t.accent} />
+            <Ionicons name="leaf" size={12} color={t.accent} />
             <Text style={[styles.streakText, { color: t.accent }]}>
               {streak} day{streak === 1 ? '' : 's'} sober
             </Text>
@@ -64,7 +63,7 @@ export function TodayCard({ today, count, threshold, streak, onChange }: Props) 
           ]}>
           <Ionicons
             name={count === undefined ? 'help' : bucket === 'sober' ? 'checkmark' : 'wine'}
-            size={30}
+            size={22}
             color={count === undefined ? t.textFaint : color}
           />
         </View>
@@ -83,7 +82,7 @@ export function TodayCard({ today, count, threshold, streak, onChange }: Props) 
               styles.primary,
               { backgroundColor: t.bucket.sober, opacity: pressed ? 0.8 : 1 },
             ]}>
-            <Ionicons name="checkmark-circle" size={20} color="#04201C" />
+            <Ionicons name="checkmark-circle" size={18} color="#04201C" />
             <Text style={[styles.primaryText, { color: '#04201C' }]}>Sober today</Text>
           </Pressable>
           <Pressable
@@ -93,14 +92,13 @@ export function TodayCard({ today, count, threshold, streak, onChange }: Props) 
               styles.secondary,
               { borderColor: t.border, backgroundColor: t.cardRaised, opacity: pressed ? 0.8 : 1 },
             ]}>
-            <Ionicons name="add" size={20} color={t.text} />
+            <Ionicons name="add" size={18} color={t.text} />
             <Text style={[styles.primaryText, { color: t.text }]}>Log a drink</Text>
           </Pressable>
         </View>
       ) : (
         <View style={[styles.stepperWrap, { backgroundColor: t.cardRaised }]}>
           <Stepper
-            size="lg"
             value={count}
             onChange={onChange}
             color={color}
@@ -116,30 +114,30 @@ export function TodayCard({ today, count, threshold, streak, onChange }: Props) 
 }
 
 const styles = StyleSheet.create({
-  card: { gap: space.lg },
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
+  card: { gap: space.md, padding: space.md },
+  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   eyebrow: { fontSize: 12, fontWeight: '800', letterSpacing: 1.5 },
-  date: { fontSize: 15, marginTop: 2 },
+  date: { fontSize: 13, fontWeight: '500', letterSpacing: 0 },
   streak: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
     borderRadius: radius.pill,
   },
-  streakText: { fontSize: 13, fontWeight: '700' },
-  statusRow: { flexDirection: 'row', alignItems: 'center', gap: space.lg },
+  streakText: { fontSize: 12, fontWeight: '700' },
+  statusRow: { flexDirection: 'row', alignItems: 'center', gap: space.md },
   orb: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     borderWidth: 2,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  headline: { fontSize: 28, fontWeight: '800', letterSpacing: -0.5 },
-  sub: { fontSize: 14, marginTop: 2 },
+  headline: { fontSize: 20, fontWeight: '800', letterSpacing: -0.3 },
+  sub: { fontSize: 13, marginTop: 1 },
   actions: { flexDirection: 'row', gap: space.md },
   primary: {
     flex: 1,
@@ -147,7 +145,7 @@ const styles = StyleSheet.create({
     gap: 8,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 14,
+    paddingVertical: 10,
     borderRadius: radius.md,
   },
   secondary: {
@@ -156,12 +154,12 @@ const styles = StyleSheet.create({
     gap: 8,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 14,
+    paddingVertical: 10,
     borderRadius: radius.md,
     borderWidth: StyleSheet.hairlineWidth,
   },
-  primaryText: { fontSize: 16, fontWeight: '700' },
-  stepperWrap: { borderRadius: radius.md, paddingVertical: space.lg, gap: space.sm },
+  primaryText: { fontSize: 15, fontWeight: '700' },
+  stepperWrap: { borderRadius: radius.md, paddingVertical: space.sm, gap: space.xs },
   clear: { alignSelf: 'center' },
   clearText: { fontSize: 13, fontWeight: '600' },
 });
