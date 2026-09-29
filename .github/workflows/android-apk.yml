@@ -1,0 +1,68 @@
+name: Android APK
+
+# Builds a standalone, installable APK (JS bundled in, no dev server needed).
+# Signed with the Expo template's debug keystore: fine for sideloading onto your
+# own phone, not for Play Store distribution.
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'src/**'
+      - 'index.ts'
+      - 'app.json'
+      - 'assets/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/android-apk.yml'
+
+concurrency:
+  group: android-apk-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Typecheck and test
+        run: |
+          npm run typecheck
+          npm test
+
+      - name: Generate native Android project
+        run: npx expo prebuild --platform android --no-install
+
+      - name: Build release APK (arm64)
+        working-directory: android
+        # arm64-v8a covers virtually every Android phone from the last ~8 years
+        # and roughly quarters native build time vs. all four ABIs.
+        run: ./gradlew assembleRelease --no-daemon -PreactNativeArchitectures=arm64-v8a
+
+      - name: Rename APK
+        run: |
+          mkdir -p dist
+          cp android/app/build/outputs/apk/release/app-release.apk \
+            "dist/opendrink-${GITHUB_SHA::7}.apk"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: opendrink-apk-${{ github.run_number }}
+          path: dist/*.apk
+          retention-days: 30

@@ -56,6 +56,20 @@ for previewing the UI.
 For the most faithful notification behaviour, test reminders in a development build
 (`npx expo run:ios|android` or `eas build --profile development`) rather than Expo Go.
 
+## Installing on an Android phone
+
+Every push that touches app code runs the **Android APK** GitHub Actions workflow (you can
+also start it by hand from the Actions tab → *Android APK* → *Run workflow*). It produces a
+standalone release APK for arm64 phones:
+
+1. Open the finished run under **Actions** and download the `opendrink-apk-N` artifact
+   (a zip containing `opendrink-<sha>.apk`) — you need to be signed in to GitHub.
+2. Unzip it on the phone and open the `.apk`; allow "Install unknown apps" for your
+   browser/file manager when prompted.
+3. Later builds install over the previous one and keep your data, because every build is
+   signed with the same (Expo template debug) key. That key is public, so this is for
+   personal sideloading only — Play Store builds need your own keystore or EAS.
+
 ## Project layout
 
 ```
