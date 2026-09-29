@@ -1,6 +1,8 @@
 import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
 
+import { CHECKIN_CATEGORY, registerCheckinCategory } from './quick-log.ts';
+
 const REMINDER_ID = 'daily-log-reminder';
 const CHANNEL_ID = 'daily-reminder';
 
@@ -35,12 +37,14 @@ export async function scheduleDailyReminder(hour: number, minute: number): Promi
       importance: Notifications.AndroidImportance.DEFAULT,
     });
   }
+  await registerCheckinCategory();
   await cancelDailyReminder();
   await Notifications.scheduleNotificationAsync({
     identifier: REMINDER_ID,
     content: {
       title: 'Daily check-in',
       body: 'How did today go? Tap to log your drinks or mark a sober day.',
+      categoryIdentifier: CHECKIN_CATEGORY,
     },
     trigger: {
       type: Notifications.SchedulableTriggerInputTypes.DAILY,

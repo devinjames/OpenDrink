@@ -15,7 +15,17 @@ Built with Expo (SDK 57) + Expo Router + TypeScript.
 
   Tap any past day to edit it.
 - **Adjustable heavy-day threshold** (default **2**, range 2–12) in Settings.
-- **Daily reminder** at a time you choose (local notification, no server).
+- **Daily reminder** at a time you choose (local notification, no server), with an
+  **"I was sober today"** button:
+  - **Android:** logs the day in the background without opening the app.
+  - **iOS:** opens the app, logs the day and shows a confirmation (iOS only runs app code
+    for notification buttons when the app opens).
+  - The day logged is the day the reminder was *delivered*, so tapping it after midnight
+    still logs the right day. It never overwrites an existing entry — if that day already
+    has drinks, the app opens that day's editor instead.
+- **Backfill prompt** — on opening the app, if any of the last 7 days (not counting today,
+  and never before your first entry) are unlogged, a sheet lets you fill each in (Sober or a
+  drink count) or mark the rest sober. Shown at most once per day; "Later" dismisses it.
 - **Statistics** for 30D / 90D / 1Y / All: average drinks per day, week and month,
   average per day of week, sober-day rate, current & longest sober streak, totals.
 
@@ -51,7 +61,8 @@ For the most faithful notification behaviour, test reminders in a development bu
 ```
 src/app/            screens (Expo Router): index (Today), stats, settings
 src/components/     UI: today card, heat-map calendar, day editor, chart, tiles
-src/lib/            pure logic: dates, stats (+ tests), reminders, sample data
+src/lib/            dates, stats & backfill (+ tests), storage, reminders, quick-log
+index.ts            app entry; registers the Android quick-log background task first
 src/store/          persisted app state (entries + settings)
 src/theme/          colour tokens for dark & light
 ```

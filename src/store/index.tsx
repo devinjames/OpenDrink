@@ -1,4 +1,3 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   createContext,
   useCallback,
@@ -12,29 +11,16 @@ import {
 
 import type { DateKey } from '@/lib/dates.ts';
 import { cancelDailyReminder, scheduleDailyReminder } from '@/lib/reminders.ts';
-import { DEFAULT_THRESHOLD, type Entries } from '@/lib/stats.ts';
+import type { Entries } from '@/lib/stats.ts';
+import {
+  DEFAULT_SETTINGS,
+  loadState,
+  registerLiveStore,
+  saveState,
+  type Settings,
+} from '@/lib/storage.ts';
 
-const STORAGE_KEY = 'opendrink:v1';
-
-export interface Settings {
-  threshold: number;
-  reminderEnabled: boolean;
-  reminderHour: number;
-  reminderMinute: number;
-}
-
-interface PersistedState {
-  version: 1;
-  entries: Entries;
-  settings: Settings;
-}
-
-const DEFAULT_SETTINGS: Settings = {
-  threshold: DEFAULT_THRESHOLD,
-  reminderEnabled: false,
-  reminderHour: 21,
-  reminderMinute: 0,
-};
+export type { Settings };
 
 interface Store {
   ready: boolean;
@@ -57,12 +43,10 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const hydrated = useRef(false);
 
   useEffect(() => {
-    AsyncStorage.getItem(STORAGE_KEY)
-      .then((raw) => {
-        if (!raw) return;
-        const parsed = JSON.parse(raw) as Partial<PersistedState>;
-        setEntries(parsed.entries ?? {});
-        setSettings({ ...DEFAULT_SETTINGS, ...parsed.settings });
+    loadState()
+      .then((state) => {
+        setEntries(state.entries);
+        setSettings(state.settings);
       })
       .catch((e) => console.warn('Failed to load data', e))
       .finally(() => {
@@ -73,8 +57,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!hydrated.current) return;
-    const state: PersistedState = { version: 1, entries, settings };
-    AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(state)).catch((e) =>
+    saveState({ version: 1, entries, settings }).catch((e) =>
       console.warn('Failed to save data', e)
     );
   }, [entries, settings]);
@@ -97,6 +80,17 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       return next;
     });
   }, []);
+
+  // Expose live state to notification-action handlers once hydrated.
+  const entriesRef = useRef(entries);
+  useEffect(() => {
+    entriesRef.current = entries;
+  }, [entries]);
+  useEffect(() => {
+    if (!ready) return;
+    registerLiveStore({ getEntries: () => entriesRef.current, setCount });
+    return () => registerLiveStore(null);
+  }, [ready, setCount]);
 
   const updateSettings = useCallback((patch: Partial<Settings>) => {
     setSettings((prev) => ({ ...prev, ...patch }));

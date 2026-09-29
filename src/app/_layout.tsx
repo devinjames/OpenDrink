@@ -5,6 +5,7 @@ import { StatusBar } from 'expo-status-bar';
 import Tabs from 'expo-router/tabs';
 import { useEffect } from 'react';
 
+import { NotificationBridge } from '@/components/notification-bridge.tsx';
 import { StoreProvider, useStore } from '@/store/index.tsx';
 import { useTheme } from '@/theme/index.ts';
 
@@ -33,6 +34,7 @@ function AppTabs() {
   return (
     <ThemeProvider value={navTheme}>
       <StatusBar style={t.scheme === 'dark' ? 'light' : 'dark'} />
+      <NotificationBridge />
       <Tabs
         screenOptions={{
           headerShown: false,

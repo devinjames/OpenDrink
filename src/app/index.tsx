@@ -1,14 +1,16 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { router } from 'expo-router';
-import { useMemo, useState } from 'react';
-import { Pressable, StyleSheet, Text } from 'react-native';
+import { router, useLocalSearchParams } from 'expo-router';
+import { useEffect, useMemo, useState } from 'react';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { BackfillSheet } from '@/components/backfill-sheet.tsx';
 import { DayEditor } from '@/components/day-editor.tsx';
 import { HeatMapCalendar } from '@/components/heat-map-calendar.tsx';
 import { Screen } from '@/components/screen.tsx';
 import { TodayCard } from '@/components/today-card.tsx';
 import { useToday } from '@/hooks/use-today.ts';
-import { addMonths, toKey, type DateKey } from '@/lib/dates.ts';
+import { missingDays, shouldPromptBackfill } from '@/lib/backfill.ts';
+import { addMonths, formatLongDate, fromKey, toKey, type DateKey } from '@/lib/dates.ts';
 import { remindersSupported } from '@/lib/reminders.ts';
 import { currentSoberStreak } from '@/lib/stats.ts';
 import { useStore } from '@/store/index.tsx';
@@ -17,16 +19,45 @@ import { radius, space, useTheme } from '@/theme/index.ts';
 export default function TodayScreen() {
   const t = useTheme();
   const today = useToday();
-  const { entries, settings, setCount } = useStore();
+  const { ready, entries, settings, setCount, importEntries, updateSettings } = useStore();
+  // Set by the notification bridge: `edit` opens a day, `loggedSober` confirms a quick-log.
+  const params = useLocalSearchParams<{ edit?: string; loggedSober?: string }>();
   const [monthOffset, setMonthOffset] = useState(0);
-  const [editing, setEditing] = useState<DateKey | null>(null);
+  const [editingLocal, setEditing] = useState<DateKey | null>(null);
+  // Wait for hydration so the editor never starts from a not-yet-loaded (empty) day.
+  const editing = ready ? (editingLocal ?? params.edit ?? null) : null;
 
   const todayKey = toKey(today);
   const month = addMonths(today, monthOffset);
   const streak = useMemo(() => currentSoberStreak(entries, today), [entries, today]);
 
+  const backfillDays = useMemo(() => missingDays(entries, today), [entries, today]);
+  const showBackfill =
+    ready && editing === null && shouldPromptBackfill(entries, today, settings.lastBackfillPrompt);
+  const closeBackfill = () => updateSettings({ lastBackfillPrompt: todayKey });
+
+  const closeEditor = () => {
+    setEditing(null);
+    if (params.edit) router.setParams({ edit: undefined });
+  };
+
+  useEffect(() => {
+    if (!params.loggedSober) return;
+    const timer = setTimeout(() => router.setParams({ loggedSober: undefined }), 4000);
+    return () => clearTimeout(timer);
+  }, [params.loggedSober]);
+
   return (
     <Screen title="OpenDrink">
+      {params.loggedSober ? (
+        <View style={[styles.banner, { backgroundColor: t.bucket.sober }]}>
+          <Ionicons name="leaf" size={18} color="#FFFFFF" />
+          <Text style={[styles.bannerText, { color: '#FFFFFF' }]}>
+            Logged {formatLongDate(fromKey(params.loggedSober))} as a sober day.
+          </Text>
+        </View>
+      ) : null}
+
       <TodayCard
         today={today}
         count={entries[todayKey]}
@@ -60,10 +91,21 @@ export default function TodayScreen() {
         day={editing}
         count={editing ? entries[editing] : undefined}
         threshold={settings.threshold}
-        onClose={() => setEditing(null)}
+        onClose={closeEditor}
         onSave={(c) => {
           if (editing) setCount(editing, c);
-          setEditing(null);
+          closeEditor();
+        }}
+      />
+
+      <BackfillSheet
+        visible={showBackfill}
+        days={backfillDays}
+        threshold={settings.threshold}
+        onDismiss={closeBackfill}
+        onSave={(values) => {
+          importEntries(values);
+          closeBackfill();
         }}
       />
     </Screen>

@@ -23,8 +23,8 @@ export function DayEditor(props: Props) {
       animationType="slide"
       onRequestClose={props.onClose}>
       <Pressable style={styles.backdrop} onPress={props.onClose} accessibilityLabel="Close" />
-      {/* Keyed so the draft resets whenever a different day is opened. */}
-      <Sheet key={props.day ?? ''} {...props} />
+      {/* Keyed so the draft resets when a different day opens or its saved count changes. */}
+      <Sheet key={`${props.day}:${props.count}`} {...props} />
     </Modal>
   );
 }
