@@ -26,6 +26,13 @@ Built with Expo (SDK 57) + Expo Router + TypeScript.
 - **Backfill prompt** — on opening the app, if any of the last 7 days (not counting today,
   and never before your first entry) are unlogged, a sheet lets you fill each in (Sober or a
   drink count) or mark the rest sober. Shown at most once per day; "Later" dismisses it.
+- **Commitments** tab:
+  - **Sober-days commitment** — pick 1, 2, 3, 4, 8 or 12 weeks (or a custom number of
+    days). Starts today, or tomorrow if today already has drinks. Only days *logged* sober
+    count; a day with drinks breaks it (with a one-tap restart), and past unlogged days are
+    flagged so you can fill them in. It's complete once every day is logged sober.
+  - **Weekly drink target** — a max drinks per Sunday–Saturday week, with this week's total,
+    how many are left (or over), and how many days are logged.
 - **Statistics** for 30D / 90D / 1Y / All: average drinks per day, week and month,
   average per day of week, sober-day rate, current & longest sober streak, totals.
 

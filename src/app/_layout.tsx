@@ -60,6 +60,13 @@ function AppTabs() {
           }}
         />
         <Tabs.Screen
+          name="commitments"
+          options={{
+            title: 'Commit',
+            tabBarIcon: ({ color, size }) => <Ionicons name="flag" size={size} color={color} />,
+          }}
+        />
+        <Tabs.Screen
           name="settings"
           options={{
             title: 'Settings',

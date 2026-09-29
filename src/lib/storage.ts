@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+import type { SoberCommitment } from './commitments.ts';
 import type { DateKey } from './dates.ts';
 import { DEFAULT_THRESHOLD, type Entries } from './stats.ts';
 
@@ -12,6 +13,10 @@ export interface Settings {
   reminderMinute: number;
   /** Day the backfill prompt was last shown, so it appears at most once a day. */
   lastBackfillPrompt: DateKey | null;
+  /** Current sober-days commitment, if any. */
+  commitment: SoberCommitment | null;
+  /** Target maximum drinks per Sunday-start week; `null` means no target. */
+  weeklyTarget: number | null;
 }
 
 export interface PersistedState {
@@ -26,6 +31,8 @@ export const DEFAULT_SETTINGS: Settings = {
   reminderHour: 21,
   reminderMinute: 0,
   lastBackfillPrompt: null,
+  commitment: null,
+  weeklyTarget: null,
 };
 
 export async function loadState(): Promise<PersistedState> {
