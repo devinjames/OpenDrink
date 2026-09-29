@@ -1,0 +1,167 @@
+import Ionicons from '@expo/vector-icons/Ionicons';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
+
+import { Card } from '@/components/card.tsx';
+import { Stepper } from '@/components/stepper.tsx';
+import { formatLongDate } from '@/lib/dates.ts';
+import { bucketFor } from '@/lib/stats.ts';
+import { radius, space, useTheme } from '@/theme/index.ts';
+
+interface Props {
+  today: Date;
+  count: number | undefined;
+  threshold: number;
+  streak: number;
+  onChange: (count: number | null) => void;
+}
+
+export function TodayCard({ today, count, threshold, streak, onChange }: Props) {
+  const t = useTheme();
+  const bucket = bucketFor(count, threshold);
+  const color = t.bucket[bucket];
+
+  const headline =
+    count === undefined
+      ? 'Not logged yet'
+      : count === 0
+        ? 'Sober day'
+        : `${count} drink${count === 1 ? '' : 's'}`;
+
+  const sub =
+    count === undefined
+      ? 'How is today going?'
+      : bucket === 'sober'
+        ? 'Nice work. Every sober day counts.'
+        : bucket === 'moderate'
+          ? `Under your limit of ${threshold}.`
+          : `At or above your limit of ${threshold}.`;
+
+  return (
+    <Card style={styles.card}>
+      <View style={styles.header}>
+        <View>
+          <Text style={[styles.eyebrow, { color: t.accent }]}>TODAY</Text>
+          <Text style={[styles.date, { color: t.textMuted }]}>{formatLongDate(today)}</Text>
+        </View>
+        {streak > 0 ? (
+          <View style={[styles.streak, { backgroundColor: t.accentSoft }]}>
+            <Ionicons name="leaf" size={14} color={t.accent} />
+            <Text style={[styles.streakText, { color: t.accent }]}>
+              {streak} day{streak === 1 ? '' : 's'} sober
+            </Text>
+          </View>
+        ) : null}
+      </View>
+
+      <View style={styles.statusRow}>
+        <View
+          style={[
+            styles.orb,
+            {
+              borderColor: count === undefined ? t.border : color,
+              backgroundColor: count === undefined ? t.cardRaised : color + '22',
+            },
+          ]}>
+          <Ionicons
+            name={count === undefined ? 'help' : bucket === 'sober' ? 'checkmark' : 'wine'}
+            size={30}
+            color={count === undefined ? t.textFaint : color}
+          />
+        </View>
+        <View style={{ flex: 1 }}>
+          <Text style={[styles.headline, { color: t.text }]}>{headline}</Text>
+          <Text style={[styles.sub, { color: t.textMuted }]}>{sub}</Text>
+        </View>
+      </View>
+
+      {count === undefined ? (
+        <View style={styles.actions}>
+          <Pressable
+            accessibilityRole="button"
+            onPress={() => onChange(0)}
+            style={({ pressed }) => [
+              styles.primary,
+              { backgroundColor: t.bucket.sober, opacity: pressed ? 0.8 : 1 },
+            ]}>
+            <Ionicons name="checkmark-circle" size={20} color="#04201C" />
+            <Text style={[styles.primaryText, { color: '#04201C' }]}>Sober today</Text>
+          </Pressable>
+          <Pressable
+            accessibilityRole="button"
+            onPress={() => onChange(1)}
+            style={({ pressed }) => [
+              styles.secondary,
+              { borderColor: t.border, backgroundColor: t.cardRaised, opacity: pressed ? 0.8 : 1 },
+            ]}>
+            <Ionicons name="add" size={20} color={t.text} />
+            <Text style={[styles.primaryText, { color: t.text }]}>Log a drink</Text>
+          </Pressable>
+        </View>
+      ) : (
+        <View style={[styles.stepperWrap, { backgroundColor: t.cardRaised }]}>
+          <Stepper
+            size="lg"
+            value={count}
+            onChange={onChange}
+            color={color}
+            label={count === 1 ? 'drink' : 'drinks'}
+          />
+          <Pressable onPress={() => onChange(null)} hitSlop={8} style={styles.clear}>
+            <Text style={[styles.clearText, { color: t.textFaint }]}>Clear today</Text>
+          </Pressable>
+        </View>
+      )}
+    </Card>
+  );
+}
+
+const styles = StyleSheet.create({
+  card: { gap: space.lg },
+  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
+  eyebrow: { fontSize: 12, fontWeight: '800', letterSpacing: 1.5 },
+  date: { fontSize: 15, marginTop: 2 },
+  streak: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: radius.pill,
+  },
+  streakText: { fontSize: 13, fontWeight: '700' },
+  statusRow: { flexDirection: 'row', alignItems: 'center', gap: space.lg },
+  orb: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    borderWidth: 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  headline: { fontSize: 28, fontWeight: '800', letterSpacing: -0.5 },
+  sub: { fontSize: 14, marginTop: 2 },
+  actions: { flexDirection: 'row', gap: space.md },
+  primary: {
+    flex: 1,
+    flexDirection: 'row',
+    gap: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 14,
+    borderRadius: radius.md,
+  },
+  secondary: {
+    flex: 1,
+    flexDirection: 'row',
+    gap: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 14,
+    borderRadius: radius.md,
+    borderWidth: StyleSheet.hairlineWidth,
+  },
+  primaryText: { fontSize: 16, fontWeight: '700' },
+  stepperWrap: { borderRadius: radius.md, paddingVertical: space.lg, gap: space.sm },
+  clear: { alignSelf: 'center' },
+  clearText: { fontSize: 13, fontWeight: '600' },
+});
