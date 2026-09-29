@@ -26,6 +26,9 @@ Built with Expo (SDK 57) + Expo Router + TypeScript.
 - **Backfill prompt** — on opening the app, if any of the last 7 days (not counting today,
   and never before your first entry) are unlogged, a sheet lets you fill each in (Sober or a
   drink count) or mark the rest sober. Shown at most once per day; "Later" dismisses it.
+- **Export as CSV** (Settings → Data) — one row per logged day (`date,weekday,drinks,status`),
+  shared via the system share sheet (Files, email, Drive…) or downloaded on web. Unlogged
+  days are omitted, and `status` uses your current heavy-day threshold.
 - **Statistics** for 30D / 90D / 1Y / All: average drinks per day, week and month,
   average per day of week, sober-day rate, current & longest sober streak, totals.
 

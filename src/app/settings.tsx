@@ -8,8 +8,10 @@ import { Screen, SectionLabel } from '@/components/screen.tsx';
 import { Stepper } from '@/components/stepper.tsx';
 import { useToday } from '@/hooks/use-today.ts';
 import { formatTime } from '@/lib/dates.ts';
+import { entriesToCsv, exportFileName } from '@/lib/export.ts';
 import { ensurePermission, remindersSupported } from '@/lib/reminders.ts';
 import { sampleEntries } from '@/lib/sample-data.ts';
+import { shareCsv } from '@/lib/share-export.ts';
 import { MAX_THRESHOLD, MIN_THRESHOLD } from '@/lib/stats.ts';
 import { useStore } from '@/store/index.tsx';
 import { radius, space, useTheme } from '@/theme/index.ts';
@@ -28,7 +30,7 @@ function confirm(title: string, message: string, onConfirm: () => void) {
 export default function SettingsScreen() {
   const t = useTheme();
   const today = useToday();
-  const { settings, updateSettings, resetAll, importEntries } = useStore();
+  const { entries, settings, updateSettings, resetAll, importEntries } = useStore();
   const { threshold, reminderEnabled, reminderHour, reminderMinute } = settings;
 
   const reminderDate = new Date();
@@ -36,6 +38,17 @@ export default function SettingsScreen() {
 
   const setTime = (d: Date | undefined) => {
     if (d) updateSettings({ reminderHour: d.getHours(), reminderMinute: d.getMinutes() });
+  };
+
+  const loggedCount = Object.keys(entries).length;
+
+  const exportData = async () => {
+    try {
+      await shareCsv(exportFileName(today), entriesToCsv(entries, threshold));
+    } catch (e) {
+      console.warn('Export failed', e);
+      Alert.alert('Export failed', 'Your data could not be exported. Please try again.');
+    }
   };
 
   const toggleReminder = async (on: boolean) => {
@@ -128,6 +141,17 @@ export default function SettingsScreen() {
         <Text style={[styles.body, { color: t.textMuted }]}>
           Your data is stored only on this device. Nothing is uploaded.
         </Text>
+        <Pressable
+          onPress={exportData}
+          disabled={loggedCount === 0}
+          style={[styles.link, loggedCount === 0 && { opacity: 0.4 }]}>
+          <Text style={[styles.linkText, { color: t.accent }]}>Export as CSV</Text>
+          <Text style={[styles.rowSub, { color: t.textMuted }]}>
+            {loggedCount === 0
+              ? 'Nothing logged yet'
+              : `${loggedCount} logged ${loggedCount === 1 ? 'day' : 'days'}`}
+          </Text>
+        </Pressable>
         {__DEV__ ? (
           <Pressable onPress={() => importEntries(sampleEntries(today))} style={styles.link}>
             <Text style={[styles.linkText, { color: t.accent }]}>Load sample data (dev)</Text>
