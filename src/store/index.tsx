@@ -32,6 +32,8 @@ interface Store {
   resetAll: () => void;
   /** Merge a batch of entries (e.g. sample data); existing days are overwritten. */
   importEntries: (batch: Entries) => void;
+  /** Replace every entry with `next` and apply a settings patch (restoring a backup). */
+  replaceEntries: (next: Entries, settingsPatch: Partial<Settings>) => void;
 }
 
 const StoreContext = createContext<Store | null>(null);
@@ -105,9 +107,23 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     setEntries((prev) => ({ ...prev, ...batch }));
   }, []);
 
+  const replaceEntries = useCallback((next: Entries, settingsPatch: Partial<Settings>) => {
+    setEntries(next);
+    setSettings((prev) => ({ ...prev, ...settingsPatch }));
+  }, []);
+
   const value = useMemo(
-    () => ({ ready, entries, settings, setCount, updateSettings, resetAll, importEntries }),
-    [ready, entries, settings, setCount, updateSettings, resetAll, importEntries]
+    () => ({
+      ready,
+      entries,
+      settings,
+      setCount,
+      updateSettings,
+      resetAll,
+      importEntries,
+      replaceEntries,
+    }),
+    [ready, entries, settings, setCount, updateSettings, resetAll, importEntries, replaceEntries]
   );
 
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>;

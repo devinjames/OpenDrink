@@ -7,18 +7,28 @@ import { Legend } from '@/components/legend.tsx';
 import { Screen, SectionLabel } from '@/components/screen.tsx';
 import { Stepper } from '@/components/stepper.tsx';
 import { useToday } from '@/hooks/use-today.ts';
+import { backupFileName, BackupError, createBackup, parseBackup } from '@/lib/backup.ts';
 import { confirm } from '@/lib/confirm.ts';
 import { formatTime } from '@/lib/dates.ts';
+import { entriesToCsv, exportFileName } from '@/lib/export.ts';
+import { pickTextFile, shareFile } from '@/lib/files.ts';
 import { ensurePermission, remindersSupported } from '@/lib/reminders.ts';
 import { sampleEntries } from '@/lib/sample-data.ts';
 import { MAX_THRESHOLD, MIN_THRESHOLD } from '@/lib/stats.ts';
 import { useStore } from '@/store/index.tsx';
 import { radius, space, useTheme } from '@/theme/index.ts';
 
+function notify(title: string, message: string) {
+  if (Platform.OS === 'web') window.alert(`${title}\n\n${message}`);
+  else Alert.alert(title, message);
+}
+
+const days = (n: number) => `${n} ${n === 1 ? 'day' : 'days'}`;
+
 export default function SettingsScreen() {
   const t = useTheme();
   const today = useToday();
-  const { settings, updateSettings, resetAll, importEntries } = useStore();
+  const { entries, settings, updateSettings, resetAll, importEntries, replaceEntries } = useStore();
   const { threshold, reminderEnabled, reminderHour, reminderMinute } = settings;
 
   const reminderDate = new Date();
@@ -26,6 +36,65 @@ export default function SettingsScreen() {
 
   const setTime = (d: Date | undefined) => {
     if (d) updateSettings({ reminderHour: d.getHours(), reminderMinute: d.getMinutes() });
+  };
+
+  const loggedCount = Object.keys(entries).length;
+
+  const exportCsv = async () => {
+    try {
+      await shareFile({
+        fileName: exportFileName(today),
+        contents: entriesToCsv(entries, threshold),
+        mimeType: 'text/csv',
+        uti: 'public.comma-separated-values-text',
+        dialogTitle: 'Export OpenDrink data',
+      });
+    } catch (e) {
+      console.warn('Export failed', e);
+      notify('Export failed', 'Your data could not be exported. Please try again.');
+    }
+  };
+
+  const backUp = async () => {
+    try {
+      await shareFile({
+        fileName: backupFileName(today),
+        contents: createBackup(entries, settings, new Date()),
+        mimeType: 'application/json',
+        uti: 'public.json',
+        dialogTitle: 'Save OpenDrink backup',
+      });
+    } catch (e) {
+      console.warn('Backup failed', e);
+      notify('Backup failed', 'Your backup could not be created. Please try again.');
+    }
+  };
+
+  const restore = async () => {
+    let backup: ReturnType<typeof parseBackup>;
+    try {
+      const text = await pickTextFile(['application/json']);
+      if (text === null) return;
+      backup = parseBackup(text);
+    } catch (e) {
+      if (!(e instanceof BackupError)) console.warn('Restore failed', e);
+      const message = e instanceof BackupError ? e.message : 'The file could not be read.';
+      return notify("Couldn't restore backup", message);
+    }
+
+    const incoming = Object.keys(backup.entries).length;
+    const apply = () => {
+      replaceEntries(backup.entries, backup.settings);
+      notify('Backup restored', `Restored ${days(incoming)}.`);
+    };
+    if (loggedCount === 0) return apply();
+    confirm(
+      'Replace your data?',
+      `Your ${days(loggedCount)} on this device will be replaced by the ${days(incoming)} ` +
+        'in this backup. Back up first if you want to keep them.',
+      'Replace',
+      apply
+    );
   };
 
   const toggleReminder = async (on: boolean) => {
@@ -118,6 +187,32 @@ export default function SettingsScreen() {
         <Text style={[styles.body, { color: t.textMuted }]}>
           Your data is stored only on this device. Nothing is uploaded.
         </Text>
+        <Pressable
+          onPress={backUp}
+          disabled={loggedCount === 0}
+          style={[styles.link, loggedCount === 0 && { opacity: 0.4 }]}>
+          <Text style={[styles.linkText, { color: t.accent }]}>Back up data</Text>
+          <Text style={[styles.rowSub, { color: t.textMuted }]}>
+            {loggedCount === 0
+              ? 'Nothing logged yet'
+              : `JSON file with ${days(loggedCount)} and your settings`}
+          </Text>
+        </Pressable>
+        <Pressable onPress={restore} style={styles.link}>
+          <Text style={[styles.linkText, { color: t.accent }]}>Restore from backup</Text>
+          <Text style={[styles.rowSub, { color: t.textMuted }]}>
+            Replaces the data on this device
+          </Text>
+        </Pressable>
+        <Pressable
+          onPress={exportCsv}
+          disabled={loggedCount === 0}
+          style={[styles.link, loggedCount === 0 && { opacity: 0.4 }]}>
+          <Text style={[styles.linkText, { color: t.accent }]}>Export as CSV</Text>
+          <Text style={[styles.rowSub, { color: t.textMuted }]}>
+            For spreadsheets only, not for restoring
+          </Text>
+        </Pressable>
         {__DEV__ ? (
           <Pressable onPress={() => importEntries(sampleEntries(today))} style={styles.link}>
             <Text style={[styles.linkText, { color: t.accent }]}>Load sample data (dev)</Text>

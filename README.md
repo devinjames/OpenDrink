@@ -33,6 +33,15 @@ Built with Expo (SDK 57) + Expo Router + TypeScript.
     flagged so you can fill them in. It's complete once every day is logged sober.
   - **Weekly drink target** — a max drinks per Sunday–Saturday week, with this week's total,
     how many are left (or over), and how many days are logged.
+- **Backup & restore** (Settings → Data) — **Back up data** saves a JSON file with every
+  logged day plus your threshold, reminder time, commitment and weekly target, via the share sheet (Files, Drive, email…)
+  or a download on web. **Restore from backup** picks that file and *replaces* this device's
+  data after a confirmation. The file is fully validated first; a malformed backup is
+  rejected whole, never half-imported. Reminder on/off is not restored because notification
+  permission is per-device — turn it back on after restoring.
+- **Export as CSV** — one row per logged day (`date,weekday,drinks,status`) for spreadsheets.
+  Unlogged days are omitted, and `status` uses your current heavy-day threshold. CSV can't
+  be restored; use a backup for that.
 - **Statistics** for 30D / 90D / 1Y / All: average drinks per day, week and month,
   average per day of week, sober-day rate, current & longest sober streak, totals.
 
