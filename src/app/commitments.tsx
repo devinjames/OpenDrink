@@ -1,7 +1,8 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
+import DateTimePicker, { DateTimePickerAndroid } from '@react-native-community/datetimepicker';
 import { router } from 'expo-router';
 import { useMemo, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { Card } from '@/components/card.tsx';
 import { Screen, SectionLabel } from '@/components/screen.tsx';
@@ -15,13 +16,22 @@ import {
   DEFAULT_WEEKLY_TARGET,
   formatDuration,
   MAX_COMMITMENT_DAYS,
+  MAX_START_OFFSET_DAYS,
   MAX_WEEKLY_TARGET,
   MIN_COMMITMENT_DAYS,
   weekProgress,
   type SoberCommitment,
 } from '@/lib/commitments.ts';
 import { confirm } from '@/lib/confirm.ts';
-import { addDays, formatLongDate, formatShortDate, fromKey, toKey } from '@/lib/dates.ts';
+import {
+  addDays,
+  daysBetween,
+  formatLongDate,
+  formatShortDate,
+  fromKey,
+  startOfDay,
+  toKey,
+} from '@/lib/dates.ts';
 import { useStore } from '@/store/index.tsx';
 import { radius, space, useTheme, type Theme } from '@/theme/index.ts';
 
@@ -100,17 +110,97 @@ function LinkButton({
   );
 }
 
+function StartDateRow({
+  value,
+  today,
+  onChange,
+}: {
+  value: Date;
+  today: Date;
+  onChange: (d: Date) => void;
+}) {
+  const t = useTheme();
+  const minimumDate = addDays(today, -MAX_START_OFFSET_DAYS);
+  const maximumDate = addDays(today, MAX_START_OFFSET_DAYS);
+  const pick = (d: Date) => onChange(startOfDay(d));
+
+  let control;
+  if (Platform.OS === 'ios') {
+    control = (
+      <DateTimePicker
+        mode="date"
+        display="compact"
+        value={value}
+        minimumDate={minimumDate}
+        maximumDate={maximumDate}
+        onValueChange={(_, d) => pick(d)}
+        accentColor={t.accent}
+        themeVariant={t.scheme}
+      />
+    );
+  } else if (Platform.OS === 'android') {
+    control = (
+      <Pressable
+        accessibilityRole="button"
+        onPress={() =>
+          DateTimePickerAndroid.open({
+            mode: 'date',
+            value,
+            minimumDate,
+            maximumDate,
+            onValueChange: (_, d) => pick(d),
+          })
+        }
+        style={[styles.datePill, { backgroundColor: t.cardRaised }]}>
+        <Text style={[styles.dateText, { color: t.text }]}>{formatLongDate(value)}</Text>
+      </Pressable>
+    );
+  } else {
+    // The native picker isn't available on web: step a day at a time instead.
+    const offset = daysBetween(today, value);
+    control = (
+      <Stepper
+        value={offset}
+        onChange={(n) => pick(addDays(today, n))}
+        min={-MAX_START_OFFSET_DAYS}
+        max={MAX_START_OFFSET_DAYS}
+        label="days from today"
+      />
+    );
+  }
+
+  return (
+    <View style={styles.startRow}>
+      <Text style={[styles.rowTitle, { color: t.text, flex: 1 }]}>Start date</Text>
+      {control}
+    </View>
+  );
+}
+
+function startPhrase(start: Date, today: Date): string {
+  const diff = daysBetween(today, start);
+  if (diff === 0) return 'Starts today';
+  if (diff === 1) return 'Starts tomorrow';
+  if (diff === -1) return 'Started yesterday';
+  return diff > 0 ? `Starts ${formatLongDate(start)}` : `Started ${formatLongDate(start)}`;
+}
+
 function NewCommitmentCard() {
   const t = useTheme();
   const today = useToday();
   const { entries, updateSettings } = useStore();
   const [weeks, setWeeks] = useState<number | 'custom'>(4);
   const [customDays, setCustomDays] = useState(10);
+  // null = follow the suggested default (today, or tomorrow if today has drinks).
+  const [chosenStart, setChosenStart] = useState<Date | null>(null);
 
   const days = weeks === 'custom' ? customDays : weeks * 7;
-  const start = commitmentStartFor(entries, today);
-  const startsToday = start === toKey(today);
+  const suggested = commitmentStartFor(entries, today);
+  const start = chosenStart ? toKey(chosenStart) : suggested;
+  const startDate = fromKey(start);
   const end = commitmentEnd({ start, days });
+  const suggestedNote =
+    !chosenStart && suggested !== toKey(today) ? '\nToday already has drinks logged.' : '';
 
   return (
     <Card style={{ gap: space.lg }}>
@@ -141,9 +231,11 @@ function NewCommitmentCard() {
         />
       ) : null}
 
+      <StartDateRow value={startDate} today={today} onChange={setChosenStart} />
+
       <Text style={[styles.meta, { color: t.textMuted }]}>
-        Starts {startsToday ? 'today' : 'tomorrow'} · ends {formatLongDate(end)}
-        {startsToday ? '' : '\nToday already has drinks logged.'}
+        {startPhrase(startDate, today)} · ends {formatLongDate(end)}
+        {suggestedNote}
       </Text>
 
       <PrimaryButton
@@ -161,7 +253,7 @@ function statusStyle(t: Theme, status: ReturnType<typeof commitmentProgress>['st
     case 'broken':
       return { icon: 'alert-circle' as const, color: t.bucket.heavy, text: 'Commitment broken' };
     case 'upcoming':
-      return { icon: 'time' as const, color: t.accent, text: 'Starts tomorrow' };
+      return { icon: 'time' as const, color: t.accent, text: 'Not started yet' };
     default:
       return { icon: 'flag' as const, color: t.accent, text: 'In progress' };
   }
@@ -321,6 +413,9 @@ function WeeklyTargetCard() {
 const styles = StyleSheet.create({
   body: { fontSize: 14, lineHeight: 20 },
   meta: { fontSize: 13, lineHeight: 18 },
+  startRow: { flexDirection: 'row', alignItems: 'center', gap: space.md },
+  datePill: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: radius.md },
+  dateText: { fontSize: 16, fontWeight: '600' },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
   chip: {
     paddingHorizontal: 14,

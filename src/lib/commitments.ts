@@ -10,6 +10,8 @@ export interface SoberCommitment {
 export const COMMITMENT_WEEK_PRESETS = [1, 2, 3, 4, 8, 12] as const;
 export const MIN_COMMITMENT_DAYS = 1;
 export const MAX_COMMITMENT_DAYS = 365;
+/** How far from today a commitment's start can be picked, in either direction. */
+export const MAX_START_OFFSET_DAYS = 365;
 
 export const DEFAULT_WEEKLY_TARGET = 7;
 export const MAX_WEEKLY_TARGET = 70;
@@ -19,8 +21,8 @@ export function commitmentEnd(c: SoberCommitment): Date {
 }
 
 /**
- * A new commitment starts today, unless today already has drinks logged — then it
- * starts tomorrow so it isn't broken before it begins.
+ * The suggested start for a new commitment: today, unless today already has drinks
+ * logged — then tomorrow, so it isn't broken before it begins.
  */
 export function commitmentStartFor(entries: Entries, today: Date): DateKey {
   const count = entries[toKey(today)];
