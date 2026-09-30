@@ -138,3 +138,26 @@ export function longestSoberStreak(entries: Entries): number {
   }
   return best;
 }
+
+export interface DailyPoint {
+  key: DateKey;
+  /** Drinks that day, or null when the day was not logged. */
+  count: number | null;
+  /** Running total of drinks from the start of the range through this day. */
+  cumulative: number;
+}
+
+/** One point per calendar day in the range, oldest first. */
+export function dailySeries(entries: Entries, range: RangeId, today: Date): DailyPoint[] {
+  const start = rangeStart(entries, range, today);
+  const days = Math.max(1, daysBetween(start, today) + 1);
+  const out: DailyPoint[] = [];
+  let cumulative = 0;
+  for (let i = 0; i < days; i++) {
+    const key = toKey(addDays(start, i));
+    const count = entries[key] ?? null;
+    cumulative += count ?? 0;
+    out.push({ key, count, cumulative });
+  }
+  return out;
+}

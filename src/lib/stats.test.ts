@@ -6,6 +6,7 @@ import { addDays, toKey } from './dates.ts';
 import {
   bucketFor,
   computeStats,
+  dailySeries,
   currentSoberStreak,
   longestSoberStreak,
   type Entries,
@@ -83,4 +84,20 @@ test('longest streak across month boundary', () => {
   for (let i = 0; i < 5; i++) entries[toKey(addDays(start, i))] = 0;
   entries[toKey(addDays(start, 6))] = 0;
   assert.equal(longestSoberStreak(entries), 5);
+});
+
+test('dailySeries has one point per day with a running total', () => {
+  const entries: Entries = { [k(-2)]: 3, [k(0)]: 1 };
+  const series = dailySeries(entries, '30d', today);
+  assert.equal(series.length, 30);
+  const last3 = series.slice(-3);
+  assert.deepEqual(
+    last3.map((p) => [p.count, p.cumulative]),
+    [
+      [3, 3],
+      [null, 3],
+      [1, 4],
+    ]
+  );
+  assert.equal(series.at(-1)!.key, k(0));
 });
