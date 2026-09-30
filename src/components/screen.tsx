@@ -4,7 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { space, useTheme } from '@/theme/index.ts';
 
-export function Screen({ title, children }: { title: string; children: ReactNode }) {
+export function Screen({ title, children }: { title?: string; children: ReactNode }) {
   const t = useTheme();
   const insets = useSafeAreaInsets();
   return (
@@ -12,7 +12,7 @@ export function Screen({ title, children }: { title: string; children: ReactNode
       style={{ backgroundColor: t.background }}
       contentContainerStyle={[styles.content, { paddingTop: insets.top + space.lg }]}>
       <View style={styles.inner}>
-        <Text style={[styles.title, { color: t.text }]}>{title}</Text>
+        {title ? <Text style={[styles.title, { color: t.text }]}>{title}</Text> : null}
         {children}
       </View>
     </ScrollView>
