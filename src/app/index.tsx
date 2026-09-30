@@ -7,6 +7,7 @@ import { BackfillSheet } from '@/components/backfill-sheet.tsx';
 import { DayEditor } from '@/components/day-editor.tsx';
 import { HeatMapCalendar } from '@/components/heat-map-calendar.tsx';
 import { Screen } from '@/components/screen.tsx';
+import { CommitmentPane } from '@/components/commitment-pane.tsx';
 import { TodayCard } from '@/components/today-card.tsx';
 import { useToday } from '@/hooks/use-today.ts';
 import { missingDays, shouldPromptBackfill } from '@/lib/backfill.ts';
@@ -48,7 +49,7 @@ export default function TodayScreen() {
   }, [params.loggedSober]);
 
   return (
-    <Screen title="OpenDrink">
+    <Screen>
       {params.loggedSober ? (
         <View style={[styles.banner, { backgroundColor: t.bucket.sober }]}>
           <Ionicons name="leaf" size={18} color="#FFFFFF" />
@@ -65,6 +66,15 @@ export default function TodayScreen() {
         streak={streak}
         onChange={(c) => setCount(todayKey, c)}
       />
+
+      {settings.commitment ? (
+        <CommitmentPane
+          commitment={settings.commitment}
+          entries={entries}
+          today={today}
+          threshold={settings.threshold}
+        />
+      ) : null}
 
       {remindersSupported && !settings.reminderEnabled ? (
         <Pressable
