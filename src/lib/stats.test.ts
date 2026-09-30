@@ -9,6 +9,7 @@ import {
   dailySeries,
   currentSoberStreak,
   longestSoberStreak,
+  normalizeLimits,
   type Entries,
 } from './stats.ts';
 
@@ -16,17 +17,26 @@ import {
 const today = new Date(2026, 8, 29);
 const k = (offset: number) => toKey(addDays(today, offset));
 
-test('bucketFor with default threshold 2', () => {
-  assert.equal(bucketFor(undefined, 2), 'unlogged');
-  assert.equal(bucketFor(0, 2), 'sober');
-  assert.equal(bucketFor(1, 2), 'moderate');
-  assert.equal(bucketFor(2, 2), 'heavy');
-  assert.equal(bucketFor(7, 2), 'heavy');
+test('bucketFor with the default limits: blue 1, orange 2, red 3+', () => {
+  assert.equal(bucketFor(undefined, 3, 2), 'unlogged');
+  assert.equal(bucketFor(0, 3, 2), 'sober');
+  assert.equal(bucketFor(1, 3, 2), 'low');
+  assert.equal(bucketFor(2, 3, 2), 'moderate');
+  assert.equal(bucketFor(3, 3, 2), 'heavy');
+  assert.equal(bucketFor(7, 3, 2), 'heavy');
 });
 
-test('bucketFor with raised threshold puts in-between days in moderate', () => {
-  assert.equal(bucketFor(3, 4), 'moderate');
-  assert.equal(bucketFor(4, 4), 'heavy');
+test('bucketFor ranges never overlap and cover every count', () => {
+  // blue 1-3, orange 4-5, red 6+
+  const buckets = [1, 2, 3, 4, 5, 6, 7].map((n) => bucketFor(n, 6, 4));
+  assert.deepEqual(buckets, ['low', 'low', 'low', 'moderate', 'moderate', 'heavy', 'heavy']);
+});
+
+test('normalizeLimits keeps ranges ordered with at least one count each', () => {
+  assert.deepEqual(normalizeLimits(2, 2), { threshold: 3, orangeFrom: 2 });
+  assert.deepEqual(normalizeLimits(5, 9), { threshold: 5, orangeFrom: 4 });
+  assert.deepEqual(normalizeLimits(6, 1), { threshold: 6, orangeFrom: 2 });
+  assert.deepEqual(normalizeLimits(99, 4), { threshold: 12, orangeFrom: 4 });
 });
 
 test('averages ignore unlogged days', () => {

@@ -1,6 +1,12 @@
 import { MAX_COMMITMENT_DAYS, MAX_WEEKLY_TARGET, MIN_COMMITMENT_DAYS } from './commitments.ts';
 import { toKey } from './dates.ts';
-import { MAX_THRESHOLD, MIN_THRESHOLD, type Entries } from './stats.ts';
+import {
+  DEFAULT_ORANGE_FROM,
+  MAX_THRESHOLD,
+  MIN_ORANGE_FROM,
+  normalizeLimits,
+  type Entries,
+} from './stats.ts';
 import type { Settings } from './storage.ts';
 
 const APP_MARKER = 'opendrink-backup';
@@ -13,7 +19,7 @@ const BACKUP_VERSION = 1;
  */
 export type BackupSettings = Pick<
   Settings,
-  'threshold' | 'reminderHour' | 'reminderMinute' | 'commitment' | 'weeklyTarget'
+  'threshold' | 'orangeFrom' | 'reminderHour' | 'reminderMinute' | 'commitment' | 'weeklyTarget'
 >;
 
 export interface Backup {
@@ -32,6 +38,7 @@ export function createBackup(entries: Entries, settings: Settings, now: Date): s
     entries,
     settings: {
       threshold: settings.threshold,
+      orangeFrom: settings.orangeFrom,
       reminderHour: settings.reminderHour,
       reminderMinute: settings.reminderMinute,
       commitment: settings.commitment,
@@ -97,7 +104,14 @@ export function parseBackup(text: string): {
 
   const s = isObject(data.settings) ? data.settings : {};
   const settings: Partial<BackupSettings> = {};
-  if (isIntIn(s.threshold, MIN_THRESHOLD, MAX_THRESHOLD)) settings.threshold = s.threshold;
+  // Backups from before the colour ranges have a threshold (as low as 2) and no orangeFrom;
+  // normalizeLimits raises it to the current minimum.
+  if (isIntIn(s.threshold, 2, MAX_THRESHOLD)) {
+    const orangeFrom = isIntIn(s.orangeFrom, MIN_ORANGE_FROM, MAX_THRESHOLD)
+      ? s.orangeFrom
+      : DEFAULT_ORANGE_FROM;
+    Object.assign(settings, normalizeLimits(s.threshold, orangeFrom));
+  }
   if (isIntIn(s.reminderHour, 0, 23) && isIntIn(s.reminderMinute, 0, 59)) {
     settings.reminderHour = s.reminderHour;
     settings.reminderMinute = s.reminderMinute;

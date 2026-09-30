@@ -8,13 +8,13 @@ export const CSV_HEADER = 'date,weekday,drinks,status';
  * as zero, matching the app's rule that unlogged is not sober. `status` uses the
  * threshold in effect at export time.
  */
-export function entriesToCsv(entries: Entries, threshold: number): string {
+export function entriesToCsv(entries: Entries, threshold: number, orangeFrom: number): string {
   const rows = Object.keys(entries)
     .sort()
     .map((day) => {
       const count = entries[day];
       const weekday = WEEKDAY_SHORT[fromKey(day).getDay()];
-      return `${day},${weekday},${count},${bucketFor(count, threshold)}`;
+      return `${day},${weekday},${count},${bucketFor(count, threshold, orangeFrom)}`;
     });
   return [CSV_HEADER, ...rows].join('\n') + '\n';
 }

@@ -11,6 +11,7 @@ interface Props {
   day: DateKey | null;
   count: number | undefined;
   threshold: number;
+  orangeFrom: number;
   onSave: (count: number | null) => void;
   onClose: () => void;
 }
@@ -29,11 +30,11 @@ export function DayEditor(props: Props) {
   );
 }
 
-function Sheet({ day, count, threshold, onSave }: Props) {
+function Sheet({ day, count, threshold, orangeFrom, onSave }: Props) {
   const t = useTheme();
   const insets = useSafeAreaInsets();
   const [draft, setDraft] = useState(count ?? 0);
-  const color = t.bucket[bucketFor(draft, threshold)];
+  const color = t.bucket[bucketFor(draft, threshold, orangeFrom)];
 
   return (
     <View

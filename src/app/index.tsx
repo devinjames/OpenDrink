@@ -6,6 +6,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { BackfillSheet } from '@/components/backfill-sheet.tsx';
 import { DayEditor } from '@/components/day-editor.tsx';
 import { HeatMapCalendar } from '@/components/heat-map-calendar.tsx';
+import { MonthStats } from '@/components/month-stats.tsx';
 import { Screen } from '@/components/screen.tsx';
 import { CommitmentPane } from '@/components/commitment-pane.tsx';
 import { TodayCard } from '@/components/today-card.tsx';
@@ -63,6 +64,7 @@ export default function TodayScreen() {
         today={today}
         count={entries[todayKey]}
         threshold={settings.threshold}
+        orangeFrom={settings.orangeFrom}
         streak={streak}
         onChange={(c) => setCount(todayKey, c)}
       />
@@ -73,6 +75,7 @@ export default function TodayScreen() {
           entries={entries}
           today={today}
           threshold={settings.threshold}
+          orangeFrom={settings.orangeFrom}
         />
       ) : null}
 
@@ -93,14 +96,24 @@ export default function TodayScreen() {
         today={today}
         entries={entries}
         threshold={settings.threshold}
+        orangeFrom={settings.orangeFrom}
         onChangeMonth={(d) => setMonthOffset((o) => Math.min(0, o + d))}
         onSelectDay={setEditing}
+      />
+
+      <MonthStats
+        month={month}
+        today={today}
+        entries={entries}
+        threshold={settings.threshold}
+        orangeFrom={settings.orangeFrom}
       />
 
       <DayEditor
         day={editing}
         count={editing ? entries[editing] : undefined}
         threshold={settings.threshold}
+        orangeFrom={settings.orangeFrom}
         onClose={closeEditor}
         onSave={(c) => {
           if (editing) setCount(editing, c);
@@ -112,6 +125,7 @@ export default function TodayScreen() {
         visible={showBackfill}
         days={backfillDays}
         threshold={settings.threshold}
+        orangeFrom={settings.orangeFrom}
         onDismiss={closeBackfill}
         onSave={(values) => {
           importEntries(values);

@@ -35,7 +35,8 @@ const dark: Theme = {
     unlogged: '#1B282E',
     // Validated for colour-vision deficiency separation against `card` (dataviz validator).
     sober: '#12A57A',
-    moderate: '#C98205',
+    low: '#3B8BEB',
+    moderate: '#E8820C',
     heavy: '#E23A6A',
   },
 };
@@ -56,7 +57,8 @@ const light: Theme = {
   bucket: {
     unlogged: '#E4ECEE',
     sober: '#0E9F6E',
-    moderate: '#D97706',
+    low: '#2563EB',
+    moderate: '#EA6A0A',
     heavy: '#E11D48',
   },
 };

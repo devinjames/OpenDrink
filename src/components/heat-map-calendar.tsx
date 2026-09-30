@@ -13,6 +13,7 @@ interface Props {
   today: Date;
   entries: Entries;
   threshold: number;
+  orangeFrom: number;
   onChangeMonth: (delta: number) => void;
   onSelectDay: (key: DateKey) => void;
 }
@@ -22,6 +23,7 @@ export function HeatMapCalendar({
   today,
   entries,
   threshold,
+  orangeFrom,
   onChangeMonth,
   onSelectDay,
 }: Props) {
@@ -31,7 +33,7 @@ export function HeatMapCalendar({
   const todayKey = toKey(today);
   const isCurrentMonth = year === today.getFullYear() && m === today.getMonth();
 
-  const { weeks, tally } = useMemo(() => {
+  const weeks = useMemo(() => {
     const lead = new Date(year, m, 1).getDay();
     const total = daysInMonth(year, m);
     const cells: (number | null)[] = [
@@ -42,13 +44,8 @@ export function HeatMapCalendar({
     const rows: (number | null)[][] = [];
     for (let i = 0; i < cells.length; i += 7) rows.push(cells.slice(i, i + 7));
 
-    const tally = { sober: 0, moderate: 0, heavy: 0 };
-    for (let d = 1; d <= total; d++) {
-      const b = bucketFor(entries[toKey(new Date(year, m, d))], threshold);
-      if (b !== 'unlogged') tally[b]++;
-    }
-    return { weeks: rows, tally };
-  }, [year, m, entries, threshold]);
+    return rows;
+  }, [year, m]);
 
   return (
     <Card style={{ gap: GAP, padding: space.md }}>
@@ -92,7 +89,7 @@ export function HeatMapCalendar({
             const key = toKey(date);
             const future = key > todayKey;
             const count = entries[key];
-            const bucket = bucketFor(count, threshold);
+            const bucket = bucketFor(count, threshold, orangeFrom);
             const filled = bucket !== 'unlogged';
             const isToday = key === todayKey;
             return (
@@ -129,7 +126,7 @@ export function HeatMapCalendar({
       ))}
 
       <View style={[styles.summary, { borderTopColor: t.border }]}>
-        <Legend threshold={threshold} counts={tally} />
+        <Legend threshold={threshold} orangeFrom={orangeFrom} />
       </View>
     </Card>
   );

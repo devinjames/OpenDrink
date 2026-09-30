@@ -7,7 +7,8 @@ import { DEFAULT_SETTINGS, type Settings } from './storage.ts';
 
 const settings: Settings = {
   ...DEFAULT_SETTINGS,
-  threshold: 4,
+  threshold: 5,
+  orangeFrom: 3,
   reminderEnabled: true,
   reminderHour: 8,
   reminderMinute: 30,
@@ -22,7 +23,8 @@ test('round-trips entries and portable settings', () => {
   const parsed = parseBackup(createBackup(entries, settings, now));
   assert.deepEqual(parsed.entries, entries);
   assert.deepEqual(parsed.settings, {
-    threshold: 4,
+    threshold: 5,
+    orangeFrom: 3,
     reminderHour: 8,
     reminderMinute: 30,
     commitment: { start: '2026-09-01', days: 28 },
@@ -85,6 +87,13 @@ test('out-of-range or missing settings are dropped, not applied', () => {
   );
   assert.deepEqual(parsed.settings, {});
   assert.deepEqual(parseBackup(wrap({ settings: undefined })).settings, {});
+});
+
+test('an old backup without orangeFrom, or with overlapping limits, is made consistent', () => {
+  const old = parseBackup(wrap({ settings: { threshold: 2 } })).settings;
+  assert.deepEqual([old.threshold, old.orangeFrom], [3, 2]);
+  const overlap = parseBackup(wrap({ settings: { threshold: 4, orangeFrom: 9 } })).settings;
+  assert.deepEqual([overlap.threshold, overlap.orangeFrom], [4, 3]);
 });
 
 test('an out-of-range commitment length is dropped', () => {

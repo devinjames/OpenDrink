@@ -3,21 +3,40 @@ import { addDays, daysBetween, fromKey, toKey, type DateKey } from './dates.ts';
 /** Drinks logged per day. A missing key means the day was not logged. */
 export type Entries = Record<DateKey, number>;
 
-export type Bucket = 'unlogged' | 'sober' | 'moderate' | 'heavy';
+/** `low` is shown blue, `moderate` orange and `heavy` red. */
+export type Bucket = 'unlogged' | 'sober' | 'low' | 'moderate' | 'heavy';
 
-export const DEFAULT_THRESHOLD = 2;
-export const MIN_THRESHOLD = 2;
+/** `threshold` is the first drink count that is red; it is the top of the orange range + 1. */
+export const DEFAULT_THRESHOLD = 3;
+export const MIN_THRESHOLD = 3;
 export const MAX_THRESHOLD = 12;
+/** `orangeFrom` is the first drink count that is orange; blue covers 1 up to just below it. */
+export const DEFAULT_ORANGE_FROM = 2;
+export const MIN_ORANGE_FROM = 2;
 
 /**
- * Sober = 0 drinks, heavy = at or above the threshold, moderate = anything between.
- * With the default threshold of 2, moderate is exactly one drink.
+ * Keeps the colour ranges ordered and non-overlapping: blue is 1..orangeFrom-1, orange is
+ * orangeFrom..threshold-1 and red is threshold and up. Every range holds at least one count.
  */
-export function bucketFor(count: number | undefined, threshold: number): Bucket {
+export function normalizeLimits(
+  threshold: number,
+  orangeFrom: number
+): { threshold: number; orangeFrom: number } {
+  const red = Math.min(MAX_THRESHOLD, Math.max(MIN_THRESHOLD, threshold));
+  return { threshold: red, orangeFrom: Math.min(red - 1, Math.max(MIN_ORANGE_FROM, orangeFrom)) };
+}
+
+/** Sober = 0 drinks, then blue, orange and red as set by `orangeFrom` and `threshold`. */
+export function bucketFor(
+  count: number | undefined,
+  threshold: number,
+  orangeFrom: number
+): Bucket {
   if (count === undefined) return 'unlogged';
   if (count <= 0) return 'sober';
   if (count >= threshold) return 'heavy';
-  return 'moderate';
+  if (count >= orangeFrom) return 'moderate';
+  return 'low';
 }
 
 export type RangeId = '7d' | '30d' | '90d' | '1y' | 'all';
@@ -66,10 +85,19 @@ export function computeStats(
   range: RangeId,
   today: Date
 ): Stats {
-  const start = rangeStart(entries, range, today);
-  const rangeDays = Math.max(1, daysBetween(start, today) + 1);
+  return computeStatsBetween(entries, threshold, rangeStart(entries, range, today), today);
+}
+
+/** Stats for the inclusive span `start`..`end`; days outside it are ignored. */
+export function computeStatsBetween(
+  entries: Entries,
+  threshold: number,
+  start: Date,
+  end: Date
+): Stats {
+  const rangeDays = Math.max(1, daysBetween(start, end) + 1);
   const startKey = toKey(start);
-  const endKey = toKey(today);
+  const endKey = toKey(end);
 
   let loggedDays = 0;
   let totalDrinks = 0;
@@ -83,9 +111,8 @@ export function computeStats(
     if (key < startKey || key > endKey) continue;
     loggedDays++;
     totalDrinks += count;
-    const b = bucketFor(count, threshold);
-    if (b === 'sober') soberDays++;
-    if (b === 'heavy') heavyDays++;
+    if (count === 0) soberDays++;
+    if (count >= threshold) heavyDays++;
     const wd = fromKey(key).getDay();
     wdCount[wd]++;
     wdSum[wd] += count;

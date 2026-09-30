@@ -3,25 +3,30 @@ import { StyleSheet, Text, View } from 'react-native';
 import type { Bucket } from '@/lib/stats.ts';
 import { useTheme } from '@/theme/index.ts';
 
-export function bucketLabels(threshold: number) {
+const range = (from: number, to: number) => (from === to ? `${from}` : `${from}–${to}`);
+
+export function bucketLabels(threshold: number, orangeFrom: number) {
   return {
     sober: 'Sober',
-    moderate: threshold === 2 ? '1 drink' : `1–${threshold - 1}`,
+    low: range(1, orangeFrom - 1),
+    moderate: range(orangeFrom, threshold - 1),
     heavy: `${threshold}+`,
   } as const;
 }
 
 interface Props {
   threshold: number;
+  orangeFrom: number;
   /** Optional per-bucket tallies shown next to each label. */
   counts?: Partial<Record<Bucket, number>>;
 }
 
-export function Legend({ threshold, counts }: Props) {
+export function Legend({ threshold, orangeFrom, counts }: Props) {
   const t = useTheme();
-  const labels = bucketLabels(threshold);
+  const labels = bucketLabels(threshold, orangeFrom);
   const items = [
     { bucket: 'sober' as const, label: labels.sober },
+    { bucket: 'low' as const, label: labels.low },
     { bucket: 'moderate' as const, label: labels.moderate },
     { bucket: 'heavy' as const, label: labels.heavy },
     { bucket: 'unlogged' as const, label: 'Not logged' },

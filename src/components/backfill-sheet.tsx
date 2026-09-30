@@ -11,6 +11,7 @@ interface Props {
   visible: boolean;
   days: DateKey[];
   threshold: number;
+  orangeFrom: number;
   onSave: (values: Entries) => void;
   onDismiss: () => void;
 }
@@ -29,7 +30,7 @@ export function BackfillSheet(props: Props) {
   );
 }
 
-function Sheet({ days, threshold, onSave, onDismiss }: Props) {
+function Sheet({ days, threshold, orangeFrom, onSave, onDismiss }: Props) {
   const t = useTheme();
   const insets = useSafeAreaInsets();
   const [draft, setDraft] = useState<Entries>({});
@@ -72,6 +73,7 @@ function Sheet({ days, threshold, onSave, onDismiss }: Props) {
             day={day}
             value={draft[day]}
             threshold={threshold}
+            orangeFrom={orangeFrom}
             onChange={(v) => set(day, v)}
           />
         ))}
@@ -119,16 +121,18 @@ function DayRow({
   day,
   value,
   threshold,
+  orangeFrom,
   onChange,
 }: {
   day: DateKey;
   value: number | undefined;
   threshold: number;
+  orangeFrom: number;
   onChange: (v: number | undefined) => void;
 }) {
   const t = useTheme();
   const sober = value === 0;
-  const color = t.bucket[bucketFor(value, threshold)];
+  const color = t.bucket[bucketFor(value, threshold, orangeFrom)];
 
   return (
     <View style={[styles.row, { backgroundColor: t.cardRaised }]}>

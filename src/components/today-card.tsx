@@ -11,13 +11,14 @@ interface Props {
   today: Date;
   count: number | undefined;
   threshold: number;
+  orangeFrom: number;
   streak: number;
   onChange: (count: number | null) => void;
 }
 
-export function TodayCard({ today, count, threshold, streak, onChange }: Props) {
+export function TodayCard({ today, count, threshold, orangeFrom, streak, onChange }: Props) {
   const t = useTheme();
-  const bucket = bucketFor(count, threshold);
+  const bucket = bucketFor(count, threshold, orangeFrom);
   const color = t.bucket[bucket];
 
   const headline =
@@ -32,9 +33,9 @@ export function TodayCard({ today, count, threshold, streak, onChange }: Props) 
       ? 'How is today going?'
       : bucket === 'sober'
         ? 'Nice work. Every sober day counts.'
-        : bucket === 'moderate'
-          ? `Under your limit of ${threshold}.`
-          : `At or above your limit of ${threshold}.`;
+        : bucket === 'heavy'
+          ? `At or above your limit of ${threshold}.`
+          : `Under your limit of ${threshold}.`;
 
   return (
     <Card style={styles.card}>

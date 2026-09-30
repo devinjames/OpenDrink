@@ -13,10 +13,11 @@ interface Props {
   entries: Entries;
   today: Date;
   threshold: number;
+  orangeFrom: number;
 }
 
 /** Shows the active sober commitment as one small box per day, coloured by what was logged. */
-export function CommitmentPane({ commitment, entries, today, threshold }: Props) {
+export function CommitmentPane({ commitment, entries, today, threshold, orangeFrom }: Props) {
   const t = useTheme();
   const progress = commitmentProgress(commitment, entries, today);
   if (progress.status !== 'active') return null;
@@ -24,7 +25,7 @@ export function CommitmentPane({ commitment, entries, today, threshold }: Props)
   const start = fromKey(commitment.start);
   const days = Array.from({ length: commitment.days }, (_, i) => {
     const count = entries[toKey(addDays(start, i))];
-    return { count, bucket: bucketFor(count, threshold) };
+    return { count, bucket: bucketFor(count, threshold, orangeFrom) };
   });
 
   return (

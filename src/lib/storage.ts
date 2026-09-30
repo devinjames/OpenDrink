@@ -2,12 +2,15 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import type { SoberCommitment } from './commitments.ts';
 import type { DateKey } from './dates.ts';
-import { DEFAULT_THRESHOLD, type Entries } from './stats.ts';
+import { DEFAULT_ORANGE_FROM, DEFAULT_THRESHOLD, normalizeLimits, type Entries } from './stats.ts';
 
 const STORAGE_KEY = 'opendrink:v1';
 
 export interface Settings {
+  /** First drink count shown red. */
   threshold: number;
+  /** First drink count shown orange; blue is everything from 1 up to just below it. */
+  orangeFrom: number;
   reminderEnabled: boolean;
   reminderHour: number;
   reminderMinute: number;
@@ -27,6 +30,7 @@ export interface PersistedState {
 
 export const DEFAULT_SETTINGS: Settings = {
   threshold: DEFAULT_THRESHOLD,
+  orangeFrom: DEFAULT_ORANGE_FROM,
   reminderEnabled: false,
   reminderHour: 21,
   reminderMinute: 0,
@@ -38,10 +42,12 @@ export const DEFAULT_SETTINGS: Settings = {
 export async function loadState(): Promise<PersistedState> {
   const raw = await AsyncStorage.getItem(STORAGE_KEY);
   const parsed = raw ? (JSON.parse(raw) as Partial<PersistedState>) : {};
+  const settings = { ...DEFAULT_SETTINGS, ...parsed.settings };
   return {
     version: 1,
     entries: parsed.entries ?? {},
-    settings: { ...DEFAULT_SETTINGS, ...parsed.settings },
+    // Data saved before the colour ranges existed may have a threshold of 2 and no orangeFrom.
+    settings: { ...settings, ...normalizeLimits(settings.threshold, settings.orangeFrom) },
   };
 }
 

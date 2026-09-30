@@ -4,6 +4,8 @@ import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import Tabs from 'expo-router/tabs';
 import { useEffect } from 'react';
+import { StyleSheet, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { NotificationBridge } from '@/components/notification-bridge.tsx';
 import { StoreProvider, useStore } from '@/store/index.tsx';
@@ -14,6 +16,7 @@ SplashScreen.preventAutoHideAsync();
 function AppTabs() {
   const t = useTheme();
   const { ready } = useStore();
+  const insets = useSafeAreaInsets();
 
   useEffect(() => {
     if (ready) SplashScreen.hideAsync();
@@ -76,9 +79,27 @@ function AppTabs() {
           }}
         />
       </Tabs>
+      {/* Opaque backdrop for the clock/battery so scrolled content doesn't show through it. */}
+      <View
+        pointerEvents="none"
+        style={[
+          styles.statusBackdrop,
+          { height: insets.top, backgroundColor: t.card, borderBottomColor: t.border },
+        ]}
+      />
     </ThemeProvider>
   );
 }
+
+const styles = StyleSheet.create({
+  statusBackdrop: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+  },
+});
 
 export default function RootLayout() {
   return (

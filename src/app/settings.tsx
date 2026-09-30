@@ -14,7 +14,7 @@ import { entriesToCsv, exportFileName } from '@/lib/export.ts';
 import { pickTextFile, shareFile } from '@/lib/files.ts';
 import { ensurePermission, remindersSupported } from '@/lib/reminders.ts';
 import { sampleEntries } from '@/lib/sample-data.ts';
-import { MAX_THRESHOLD, MIN_THRESHOLD } from '@/lib/stats.ts';
+import { MAX_THRESHOLD, MIN_ORANGE_FROM, MIN_THRESHOLD } from '@/lib/stats.ts';
 import { useStore } from '@/store/index.tsx';
 import { radius, space, useTheme } from '@/theme/index.ts';
 
@@ -29,7 +29,7 @@ export default function SettingsScreen() {
   const t = useTheme();
   const today = useToday();
   const { entries, settings, updateSettings, resetAll, importEntries, replaceEntries } = useStore();
-  const { threshold, reminderEnabled, reminderHour, reminderMinute } = settings;
+  const { threshold, orangeFrom, reminderEnabled, reminderHour, reminderMinute } = settings;
 
   const reminderDate = new Date();
   reminderDate.setHours(reminderHour, reminderMinute, 0, 0);
@@ -44,7 +44,7 @@ export default function SettingsScreen() {
     try {
       await shareFile({
         fileName: exportFileName(today),
-        contents: entriesToCsv(entries, threshold),
+        contents: entriesToCsv(entries, threshold, orangeFrom),
         mimeType: 'text/csv',
         uti: 'public.comma-separated-values-text',
         dialogTitle: 'Export OpenDrink data',
@@ -112,20 +112,34 @@ export default function SettingsScreen() {
 
   return (
     <Screen title="Settings">
-      <SectionLabel>Heavy-day threshold</SectionLabel>
+      <SectionLabel>Colour limits</SectionLabel>
       <Card style={{ gap: space.lg }}>
         <Text style={[styles.body, { color: t.textMuted }]}>
-          Days with this many drinks or more are highlighted as heavy days on your calendar.
+          Choose where each colour starts on your calendar. Blue covers the lowest drink counts,
+          then orange, then red. Moving where orange starts sets where blue ends, and pushes red up
+          if needed. The ranges never overlap, and a sober day is always green.
         </Text>
+        <Text style={[styles.rowTitle, { color: t.bucket.moderate }]}>Orange starts at</Text>
+        <Stepper
+          value={orangeFrom}
+          onChange={(v) => updateSettings({ orangeFrom: v, threshold: Math.max(threshold, v + 1) })}
+          min={MIN_ORANGE_FROM}
+          max={MAX_THRESHOLD - 1}
+          label="drinks"
+          color={t.bucket.moderate}
+        />
+        <Text style={[styles.rowTitle, { color: t.bucket.heavy }]}>Red starts at</Text>
         <Stepper
           value={threshold}
-          onChange={(v) => updateSettings({ threshold: v })}
+          onChange={(v) =>
+            updateSettings({ threshold: v, orangeFrom: Math.min(orangeFrom, v - 1) })
+          }
           min={MIN_THRESHOLD}
           max={MAX_THRESHOLD}
           label="drinks"
           color={t.bucket.heavy}
         />
-        <Legend threshold={threshold} />
+        <Legend threshold={threshold} orangeFrom={orangeFrom} />
       </Card>
 
       <SectionLabel>Daily reminder</SectionLabel>
