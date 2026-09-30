@@ -5,10 +5,12 @@ import { Card } from '@/components/card.tsx';
 import { Screen, SectionLabel } from '@/components/screen.tsx';
 import { Segmented } from '@/components/segmented.tsx';
 import { StatTile } from '@/components/stat-tile.tsx';
+import { TrendChart } from '@/components/trend-chart.tsx';
 import { WeekdayChart } from '@/components/weekday-chart.tsx';
 import { useToday } from '@/hooks/use-today.ts';
 import {
   computeStats,
+  dailySeries,
   currentSoberStreak,
   longestSoberStreak,
   RANGES,
@@ -29,6 +31,7 @@ export default function StatsScreen() {
     () => computeStats(entries, settings.threshold, range, today),
     [entries, settings.threshold, range, today]
   );
+  const series = useMemo(() => dailySeries(entries, range, today), [entries, range, today]);
   const streak = useMemo(() => currentSoberStreak(entries, today), [entries, today]);
   const longest = useMemo(() => longestSoberStreak(entries), [entries]);
 
@@ -52,6 +55,11 @@ export default function StatsScreen() {
           hint={`${stats.soberDays} of ${stats.loggedDays} logged`}
         />
       </View>
+
+      <SectionLabel>Trend</SectionLabel>
+      <Card>
+        <TrendChart data={series} />
+      </Card>
 
       <SectionLabel>By day of week</SectionLabel>
       <Card>
