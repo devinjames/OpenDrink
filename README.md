@@ -26,9 +26,15 @@ Built with Expo (SDK 57) + Expo Router + TypeScript.
 - **Backfill prompt** — on opening the app, if any of the last 7 days (not counting today,
   and never before your first entry) are unlogged, a sheet lets you fill each in (Sober or a
   drink count) or mark the rest sober. Shown at most once per day; "Later" dismisses it.
-- **Export as CSV** (Settings → Data) — one row per logged day (`date,weekday,drinks,status`),
-  shared via the system share sheet (Files, email, Drive…) or downloaded on web. Unlogged
-  days are omitted, and `status` uses your current heavy-day threshold.
+- **Backup & restore** (Settings → Data) — **Back up data** saves a JSON file with every
+  logged day plus your threshold and reminder time, via the share sheet (Files, Drive, email…)
+  or a download on web. **Restore from backup** picks that file and *replaces* this device's
+  data after a confirmation. The file is fully validated first; a malformed backup is
+  rejected whole, never half-imported. Reminder on/off is not restored because notification
+  permission is per-device — turn it back on after restoring.
+- **Export as CSV** — one row per logged day (`date,weekday,drinks,status`) for spreadsheets.
+  Unlogged days are omitted, and `status` uses your current heavy-day threshold. CSV can't
+  be restored; use a backup for that.
 - **Statistics** for 30D / 90D / 1Y / All: average drinks per day, week and month,
   average per day of week, sober-day rate, current & longest sober streak, totals.
 
