@@ -20,9 +20,10 @@ export function bucketFor(count: number | undefined, threshold: number): Bucket 
   return 'moderate';
 }
 
-export type RangeId = '30d' | '90d' | '1y' | 'all';
+export type RangeId = '7d' | '30d' | '90d' | '1y' | 'all';
 
 export const RANGES: { id: RangeId; label: string; days: number | null }[] = [
+  { id: '7d', label: '7D', days: 7 },
   { id: '30d', label: '30D', days: 30 },
   { id: '90d', label: '90D', days: 90 },
   { id: '1y', label: '1Y', days: 365 },
