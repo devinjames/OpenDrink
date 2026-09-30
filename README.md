@@ -1,3 +1,9 @@
+# About
+
+I made this because I couldn't find a version of this app that didn't require a paid subscription or was littered with ads.
+This is AI-made, open source software and hope others who find it valuable can run with it.
+
+
 # OpenDrink
 
 A private, on-device iOS & Android app for tracking alcohol consumption and sober days.
