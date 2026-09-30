@@ -69,3 +69,7 @@ export function formatTime(hour: number, minute: number): string {
   const h12 = hour % 12 === 0 ? 12 : hour % 12;
   return `${h12}:${pad(minute)} ${hour < 12 ? 'AM' : 'PM'}`;
 }
+
+export function formatShortDate(d: Date): string {
+  return `${MONTH_NAMES[d.getMonth()].slice(0, 3)} ${d.getDate()}`;
+}

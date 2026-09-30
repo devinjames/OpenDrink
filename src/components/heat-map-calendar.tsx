@@ -3,7 +3,7 @@ import { useMemo } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { Card } from '@/components/card.tsx';
-import { bucketLabels, Legend } from '@/components/legend.tsx';
+import { Legend } from '@/components/legend.tsx';
 import { daysInMonth, MONTH_NAMES, toKey, WEEKDAY_LETTER, type DateKey } from '@/lib/dates.ts';
 import { bucketFor, type Entries } from '@/lib/stats.ts';
 import { radius, space, useTheme } from '@/theme/index.ts';
@@ -50,17 +50,15 @@ export function HeatMapCalendar({
     return { weeks: rows, tally };
   }, [year, m, entries, threshold]);
 
-  const labels = bucketLabels(threshold);
-
   return (
-    <Card style={{ gap: space.md }}>
+    <Card style={{ gap: GAP, padding: space.md }}>
       <View style={styles.header}>
         <Pressable
           accessibilityLabel="Previous month"
           onPress={() => onChangeMonth(-1)}
           hitSlop={10}
           style={[styles.nav, { backgroundColor: t.cardRaised }]}>
-          <Ionicons name="chevron-back" size={18} color={t.text} />
+          <Ionicons name="chevron-back" size={16} color={t.text} />
         </Pressable>
         <Text style={[styles.title, { color: t.text }]}>
           {MONTH_NAMES[m]} {year}
@@ -74,7 +72,7 @@ export function HeatMapCalendar({
             styles.nav,
             { backgroundColor: t.cardRaised, opacity: isCurrentMonth ? 0.3 : 1 },
           ]}>
-          <Ionicons name="chevron-forward" size={18} color={t.text} />
+          <Ionicons name="chevron-forward" size={16} color={t.text} />
         </Pressable>
       </View>
 
@@ -131,53 +129,45 @@ export function HeatMapCalendar({
       ))}
 
       <View style={[styles.summary, { borderTopColor: t.border }]}>
-        <Summary value={tally.sober} label={labels.sober} color={t.bucket.sober} />
-        <Summary value={tally.moderate} label={labels.moderate} color={t.bucket.moderate} />
-        <Summary value={tally.heavy} label={labels.heavy} color={t.bucket.heavy} />
+        <Legend threshold={threshold} counts={tally} />
       </View>
-      <Legend threshold={threshold} />
     </Card>
   );
 }
 
-function Summary({ value, label, color }: { value: number; label: string; color: string }) {
-  const t = useTheme();
-  return (
-    <View style={{ alignItems: 'center', flex: 1 }}>
-      <Text style={[styles.summaryValue, { color }]}>{value}</Text>
-      <Text style={[styles.summaryLabel, { color: t.textMuted }]}>{label}</Text>
-    </View>
-  );
-}
-
-const GAP = 6;
+const GAP = 4;
 
 const styles = StyleSheet.create({
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: space.xs,
+  },
   nav: {
-    width: 34,
-    height: 34,
+    width: 28,
+    height: 28,
     borderRadius: radius.pill,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  title: { fontSize: 17, fontWeight: '700' },
+  title: { fontSize: 16, fontWeight: '700' },
   row: { flexDirection: 'row', gap: GAP },
-  weekday: { flex: 1, textAlign: 'center', fontSize: 12, fontWeight: '600' },
-  cell: { flex: 1, aspectRatio: 1 },
+  weekday: { flex: 1, textAlign: 'center', fontSize: 11, fontWeight: '600' },
+  // Wider than tall keeps six-week months short enough to fit a phone screen.
+  cell: { flex: 1, aspectRatio: 1.45 },
   day: {
-    borderRadius: radius.sm,
+    borderRadius: 8,
     borderWidth: 2,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  dayText: { fontSize: 13, fontVariant: ['tabular-nums'] },
+  dayText: { fontSize: 12, fontVariant: ['tabular-nums'] },
   summary: {
     flexDirection: 'row',
     borderTopWidth: StyleSheet.hairlineWidth,
-    paddingTop: space.md,
+    justifyContent: 'center',
+    paddingTop: space.sm,
     marginTop: space.xs,
   },
-  summaryValue: { fontSize: 22, fontWeight: '800', fontVariant: ['tabular-nums'] },
-  summaryLabel: { fontSize: 12, marginTop: 2 },
 });
