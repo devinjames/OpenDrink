@@ -49,6 +49,14 @@ test('range excludes entries outside window and in the future', () => {
   assert.equal(s.totalDrinks, 2);
 });
 
+test('7d range covers today and the previous six days', () => {
+  const entries: Entries = { [k(-6)]: 2, [k(-7)]: 10, [k(0)]: 1 };
+  const s = computeStats(entries, 2, '7d', today);
+  assert.equal(s.rangeDays, 7);
+  assert.equal(s.loggedDays, 2);
+  assert.equal(s.totalDrinks, 3);
+});
+
 test('"all" range starts at earliest entry', () => {
   const entries: Entries = { [k(-99)]: 1, [k(0)]: 1 };
   const s = computeStats(entries, 2, 'all', today);
