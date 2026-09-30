@@ -12,6 +12,8 @@ const settings: Settings = {
   reminderHour: 8,
   reminderMinute: 30,
   lastBackfillPrompt: '2026-09-29',
+  commitment: { start: '2026-09-01', days: 28 },
+  weeklyTarget: 5,
 };
 const now = new Date(2026, 8, 30, 12);
 
@@ -19,7 +21,20 @@ test('round-trips entries and portable settings', () => {
   const entries = { '2026-09-28': 0, '2026-09-29': 3 };
   const parsed = parseBackup(createBackup(entries, settings, now));
   assert.deepEqual(parsed.entries, entries);
-  assert.deepEqual(parsed.settings, { threshold: 4, reminderHour: 8, reminderMinute: 30 });
+  assert.deepEqual(parsed.settings, {
+    threshold: 4,
+    reminderHour: 8,
+    reminderMinute: 30,
+    commitment: { start: '2026-09-01', days: 28 },
+    weeklyTarget: 5,
+  });
+});
+
+test('an absent commitment and target are restored as cleared', () => {
+  const none = { ...settings, commitment: null, weeklyTarget: null };
+  const parsed = parseBackup(createBackup({}, none, now));
+  assert.equal(parsed.settings.commitment, null);
+  assert.equal(parsed.settings.weeklyTarget, null);
 });
 
 test('device-specific settings are not written', () => {
@@ -58,8 +73,21 @@ test('rejects malformed entries rather than importing part of the file', () => {
 
 test('out-of-range or missing settings are dropped, not applied', () => {
   const parsed = parseBackup(
-    wrap({ settings: { threshold: 99, reminderHour: 25, reminderMinute: 0 } })
+    wrap({
+      settings: {
+        threshold: 99,
+        reminderHour: 25,
+        reminderMinute: 0,
+        commitment: { start: '2026-02-31', days: 7 },
+        weeklyTarget: -1,
+      },
+    })
   );
   assert.deepEqual(parsed.settings, {});
   assert.deepEqual(parseBackup(wrap({ settings: undefined })).settings, {});
+});
+
+test('an out-of-range commitment length is dropped', () => {
+  const parsed = parseBackup(wrap({ settings: { commitment: { start: '2026-09-01', days: 0 } } }));
+  assert.equal('commitment' in parsed.settings, false);
 });

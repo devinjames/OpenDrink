@@ -8,6 +8,7 @@ import { Screen, SectionLabel } from '@/components/screen.tsx';
 import { Stepper } from '@/components/stepper.tsx';
 import { useToday } from '@/hooks/use-today.ts';
 import { backupFileName, BackupError, createBackup, parseBackup } from '@/lib/backup.ts';
+import { confirm } from '@/lib/confirm.ts';
 import { formatTime } from '@/lib/dates.ts';
 import { entriesToCsv, exportFileName } from '@/lib/export.ts';
 import { pickTextFile, shareFile } from '@/lib/files.ts';
@@ -16,17 +17,6 @@ import { sampleEntries } from '@/lib/sample-data.ts';
 import { MAX_THRESHOLD, MIN_THRESHOLD } from '@/lib/stats.ts';
 import { useStore } from '@/store/index.tsx';
 import { radius, space, useTheme } from '@/theme/index.ts';
-
-function confirm(title: string, message: string, action: string, onConfirm: () => void) {
-  if (Platform.OS === 'web') {
-    if (window.confirm(`${title}\n\n${message}`)) onConfirm();
-    return;
-  }
-  Alert.alert(title, message, [
-    { text: 'Cancel', style: 'cancel' },
-    { text: action, style: 'destructive', onPress: onConfirm },
-  ]);
-}
 
 function notify(title: string, message: string) {
   if (Platform.OS === 'web') window.alert(`${title}\n\n${message}`);
@@ -232,7 +222,7 @@ export default function SettingsScreen() {
           onPress={() =>
             confirm(
               'Delete all data?',
-              'This removes every logged day and resets settings.',
+              'This removes every logged day and resets settings and commitments.',
               'Delete',
               resetAll
             )

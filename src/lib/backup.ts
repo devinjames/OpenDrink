@@ -1,3 +1,4 @@
+import { MAX_COMMITMENT_DAYS, MAX_WEEKLY_TARGET, MIN_COMMITMENT_DAYS } from './commitments.ts';
 import { toKey } from './dates.ts';
 import { MAX_THRESHOLD, MIN_THRESHOLD, type Entries } from './stats.ts';
 import type { Settings } from './storage.ts';
@@ -10,7 +11,10 @@ const BACKUP_VERSION = 1;
  * notification permission it depends on is per-device, and `lastBackfillPrompt` is
  * per-device bookkeeping.
  */
-export type BackupSettings = Pick<Settings, 'threshold' | 'reminderHour' | 'reminderMinute'>;
+export type BackupSettings = Pick<
+  Settings,
+  'threshold' | 'reminderHour' | 'reminderMinute' | 'commitment' | 'weeklyTarget'
+>;
 
 export interface Backup {
   app: typeof APP_MARKER;
@@ -30,6 +34,8 @@ export function createBackup(entries: Entries, settings: Settings, now: Date): s
       threshold: settings.threshold,
       reminderHour: settings.reminderHour,
       reminderMinute: settings.reminderMinute,
+      commitment: settings.commitment,
+      weeklyTarget: settings.weeklyTarget,
     },
   };
   return JSON.stringify(backup, null, 2) + '\n';
@@ -43,6 +49,13 @@ export class BackupError extends Error {}
 
 const DAY_KEY = /^\d{4}-\d{2}-\d{2}$/;
 
+/** Rejects malformed keys and impossible dates like 2026-02-31 by round-tripping. */
+function isDayKey(v: unknown): v is string {
+  if (typeof v !== 'string' || !DAY_KEY.test(v)) return false;
+  const [y, m, d] = v.split('-').map(Number);
+  return toKey(new Date(y, m - 1, d)) === v;
+}
+
 const isObject = (v: unknown): v is Record<string, unknown> =>
   typeof v === 'object' && v !== null && !Array.isArray(v);
 
@@ -52,7 +65,7 @@ const isIntIn = (v: unknown, min: number, max: number): v is number =>
 /**
  * Parses and validates a backup file. Throws `BackupError` with a user-facing message if
  * the file isn't an OpenDrink backup or contains anything malformed; nothing is partially
- * accepted. Missing settings fall back to `undefined` so the caller keeps its own.
+ * accepted. Missing or out-of-range settings are left out so the caller keeps its own.
  */
 export function parseBackup(text: string): {
   entries: Entries;
@@ -76,10 +89,7 @@ export function parseBackup(text: string): {
 
   const entries: Entries = {};
   for (const [day, count] of Object.entries(data.entries)) {
-    // Round-tripping through toKey rejects impossible dates like 2026-02-31.
-    const [y, m, d] = day.split('-').map(Number);
-    const valid = DAY_KEY.test(day) && toKey(new Date(y, m - 1, d)) === day;
-    if (!valid || !isIntIn(count, 0, 999)) {
+    if (!isDayKey(day) || !isIntIn(count, 0, 999)) {
       throw new BackupError(`The backup has an invalid entry for "${day}".`);
     }
     entries[day] = count;
@@ -91,6 +101,19 @@ export function parseBackup(text: string): {
   if (isIntIn(s.reminderHour, 0, 23) && isIntIn(s.reminderMinute, 0, 59)) {
     settings.reminderHour = s.reminderHour;
     settings.reminderMinute = s.reminderMinute;
+  }
+  // `null` is meaningful here (no commitment / no target), so it is restored too.
+  const c = s.commitment;
+  if (c === null) settings.commitment = null;
+  else if (
+    isObject(c) &&
+    isDayKey(c.start) &&
+    isIntIn(c.days, MIN_COMMITMENT_DAYS, MAX_COMMITMENT_DAYS)
+  ) {
+    settings.commitment = { start: c.start, days: c.days };
+  }
+  if (s.weeklyTarget === null || isIntIn(s.weeklyTarget, 0, MAX_WEEKLY_TARGET)) {
+    settings.weeklyTarget = s.weeklyTarget;
   }
   return { entries, settings };
 }
