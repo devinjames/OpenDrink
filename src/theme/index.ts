@@ -13,6 +13,8 @@ export interface Theme {
   textFaint: string;
   accent: string;
   accentSoft: string;
+  /** Bar colour for Saturday/Sunday, distinct from the weekday `accent`. */
+  weekend: string;
   onAccent: string;
   danger: string;
   bucket: Record<Bucket, string>;
@@ -29,6 +31,7 @@ const dark: Theme = {
   textFaint: '#5E727A',
   accent: '#2DD4BF',
   accentSoft: 'rgba(45, 212, 191, 0.14)',
+  weekend: '#A78BFA',
   onAccent: '#04201C',
   danger: '#FB7185',
   bucket: {
@@ -52,6 +55,7 @@ const light: Theme = {
   textFaint: '#8A9AA0',
   accent: '#0D9488',
   accentSoft: 'rgba(13, 148, 136, 0.12)',
+  weekend: '#7C3AED',
   onAccent: '#FFFFFF',
   danger: '#E11D48',
   bucket: {

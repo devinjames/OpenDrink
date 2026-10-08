@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { WEEKDAY_SHORT } from '@/lib/dates.ts';
+import { isWeekend, WEEKDAY_SHORT } from '@/lib/dates.ts';
 import type { WeekdayStat } from '@/lib/stats.ts';
 import { space, useTheme } from '@/theme/index.ts';
 
@@ -46,7 +46,11 @@ export function WeekdayChart({ data }: { data: WeekdayStat[] }) {
                   styles.bar,
                   {
                     height: h,
-                    backgroundColor: d.loggedDays ? t.accent : t.bucket.unlogged,
+                    backgroundColor: d.loggedDays
+                      ? isWeekend(d.weekday)
+                        ? t.weekend
+                        : t.accent
+                      : t.bucket.unlogged,
                     opacity: focus === -1 || active ? 1 : 0.55,
                   },
                 ]}
