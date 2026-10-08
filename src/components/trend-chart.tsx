@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
-import { fromKey } from '@/lib/dates.ts';
+import { fromKey, isWeekend } from '@/lib/dates.ts';
 import type { DailyPoint } from '@/lib/stats.ts';
 import { space, useTheme } from '@/theme/index.ts';
 
@@ -84,7 +84,7 @@ export function TrendChart({ data }: { data: DailyPoint[] }) {
                 style={{
                   height: h,
                   width: '70%',
-                  backgroundColor: t.accent,
+                  backgroundColor: isWeekend(fromKey(d.key).getDay()) ? t.weekend : t.accent,
                   opacity: i === focus ? 1 : 0.6,
                   borderTopLeftRadius: 2,
                   borderTopRightRadius: 2,
@@ -110,6 +110,7 @@ export function TrendChart({ data }: { data: DailyPoint[] }) {
       </View>
       <View style={styles.legend}>
         <LegendItem color={t.accent} text={`Per day (max ${maxDay})`} shape="bar" muted={t.textMuted} />
+        <LegendItem color={t.weekend} text="Weekend" shape="bar" muted={t.textMuted} />
         <LegendItem color={t.text} text={`Cumulative (${total})`} shape="line" muted={t.textMuted} />
       </View>
     </View>

@@ -42,7 +42,9 @@ export function daysInMonth(year: number, month: number): number {
 }
 
 export const WEEKDAY_SHORT = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] as const;
-export const WEEKDAY_LETTER = ['S', 'M', 'T', 'W', 'T', 'F', 'S'] as const;
+/** True for Sunday (0) and Saturday (6), as returned by `Date.getDay()`. */
+export const isWeekend = (weekday: number) => weekday === 0 || weekday === 6;
+export const WEEKDAY_LETTER =['S', 'M', 'T', 'W', 'T', 'F', 'S'] as const;
 export const MONTH_NAMES = [
   'January',
   'February',
