@@ -189,3 +189,28 @@ export function dailySeries(entries: Entries, range: RangeId, today: Date): Dail
   }
   return out;
 }
+
+export interface HeatCell {
+  key: DateKey;
+  /** Drinks that day, or undefined when the day was not logged. */
+  count: number | undefined;
+}
+
+/**
+ * Calendar-heatmap layout for the inclusive span `start`..`end`: one column per week
+ * (Sunday first), each with seven slots indexed by weekday. Slots before `start` or after
+ * `end` are null so the grid stays aligned to weekdays.
+ */
+export function weekGrid(entries: Entries, start: Date, end: Date): (HeatCell | null)[][] {
+  const first = addDays(start, -start.getDay());
+  const days = daysBetween(first, end) + 1;
+  const weeks: (HeatCell | null)[][] = [];
+  for (let i = 0; i < Math.ceil(days / 7) * 7; i++) {
+    if (i % 7 === 0) weeks.push([]);
+    const d = addDays(first, i);
+    const inRange = daysBetween(start, d) >= 0 && daysBetween(d, end) >= 0;
+    const key = toKey(d);
+    weeks[weeks.length - 1].push(inRange ? { key, count: entries[key] } : null);
+  }
+  return weeks;
+}

@@ -10,6 +10,7 @@ import {
   currentSoberStreak,
   longestSoberStreak,
   normalizeLimits,
+  weekGrid,
   type Entries,
 } from './stats.ts';
 
@@ -118,4 +119,27 @@ test('dailySeries has one point per day with a running total', () => {
     ]
   );
   assert.equal(series.at(-1)!.key, k(0));
+});
+
+test('weekGrid aligns days to weekday rows and pads outside the range', () => {
+  // Today is Tuesday 29 Sep 2026; start on the previous Thursday.
+  const entries: Entries = { [k(-5)]: 2, [k(0)]: 0 };
+  const grid = weekGrid(entries, addDays(today, -5), today);
+  assert.equal(grid.length, 2);
+  assert.ok(grid.every((w) => w.length === 7));
+  // Week 1: Sun..Wed before the range, Thu..Sat in range.
+  assert.deepEqual(grid[0].slice(0, 4), [null, null, null, null]);
+  assert.deepEqual(grid[0][4], { key: k(-5), count: 2 });
+  assert.deepEqual(grid[0][5], { key: k(-4), count: undefined });
+  // Week 2: Sun..Tue in range, Wed..Sat after today.
+  assert.deepEqual(grid[1][2], { key: k(0), count: 0 });
+  assert.deepEqual(grid[1].slice(3), [null, null, null, null]);
+});
+
+test('weekGrid for a single Sunday is one column', () => {
+  const sunday = addDays(today, -2);
+  const grid = weekGrid({}, sunday, sunday);
+  assert.equal(grid.length, 1);
+  assert.deepEqual(grid[0][0], { key: k(-2), count: undefined });
+  assert.equal(grid[0].filter(Boolean).length, 1);
 });

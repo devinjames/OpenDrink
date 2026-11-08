@@ -7,6 +7,7 @@ import { Segmented } from '@/components/segmented.tsx';
 import { StatTile } from '@/components/stat-tile.tsx';
 import { TrendChart } from '@/components/trend-chart.tsx';
 import { WeekdayChart } from '@/components/weekday-chart.tsx';
+import { WeekdayHeatmap } from '@/components/weekday-heatmap.tsx';
 import { useToday } from '@/hooks/use-today.ts';
 import {
   computeStats,
@@ -14,6 +15,7 @@ import {
   currentSoberStreak,
   longestSoberStreak,
   RANGES,
+  rangeStart,
   type RangeId,
 } from '@/lib/stats.ts';
 import { useStore } from '@/store/index.tsx';
@@ -31,6 +33,7 @@ export default function StatsScreen() {
     () => computeStats(entries, settings.threshold, range, today),
     [entries, settings.threshold, range, today]
   );
+  const start = useMemo(() => rangeStart(entries, range, today), [entries, range, today]);
   const series = useMemo(() => dailySeries(entries, range, today), [entries, range, today]);
   const streak = useMemo(() => currentSoberStreak(entries, today), [entries, today]);
   const longest = useMemo(() => longestSoberStreak(entries), [entries]);
@@ -59,6 +62,17 @@ export default function StatsScreen() {
       <SectionLabel>Trend</SectionLabel>
       <Card>
         <TrendChart data={series} />
+      </Card>
+
+      <SectionLabel>Heatmap</SectionLabel>
+      <Card>
+        <WeekdayHeatmap
+          entries={entries}
+          start={start}
+          end={today}
+          threshold={settings.threshold}
+          orangeFrom={settings.orangeFrom}
+        />
       </Card>
 
       <SectionLabel>By day of week</SectionLabel>
